@@ -1,0 +1,40 @@
+#!/bin/bash
+
+PHILLY=https://w1.weather.gov/data/obhistory/KPHL.html
+HOURS=24
+WEATHER_FILE=/tmp/.weather.html
+LOCATION_REGEX="td.*class=\"white1\">(.*)</td"
+PRESSURES_REGEX="[23]\d\.\d\d"
+HH_MM_REGEX="\d\d:\d\d"
+
+# Get weather
+curl -s $PHILLY > $WEATHER_FILE
+
+TIMEZONE=$(cat $WEATHER_FILE |
+	     rg --regexp "e[ds]t" -o |
+	     head -1)
+
+LOCATION=$(cat $WEATHER_FILE |
+	     rg $LOCATION_REGEX -r '$1' -o)
+
+PRESSURES=$(cat $WEATHER_FILE |
+	      # Just pressures
+	      rg $PRESSURES_REGEX -o |
+	      # Drop the decimal (e.g. multiply by 100)
+	      sed 's/[^0-9]*//g' |
+	      # Print e.g. 30.21 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+	      perl -ne 'printf "%.2f\t%s\n", ($_ / 100), "▒" x ((int($_) - 2800) / 8)')
+
+TIMES=$(cat $WEATHER_FILE |
+	  # Just times
+	  rg --regexp $HH_MM_REGEX -o)
+
+echo $LOCATION
+echo -e "Time\tPressure"
+echo -e "($TIMEZONE)\t(in Hg)"
+
+paste <(printf %s "$TIMES") <(printf %s "$PRESSURES") |
+  # Just the last $HOURS hours
+  head -n $HOURS |
+  # Reverse it: most recent is printed last
+  tac
