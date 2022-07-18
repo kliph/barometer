@@ -20,10 +20,8 @@ LOCATION=$(cat $WEATHER_FILE |
 PRESSURES=$(cat $WEATHER_FILE |
 	      # Just pressures
 	      rg $PRESSURES_REGEX -o |
-	      # Drop the decimal (e.g. multiply by 100)
-	      sed 's/[^0-9]*//g' |
-	      # Print e.g. 30.21 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-	      perl -ne 'printf "%.2f\t%s\n", ($_ / 100), "▒" x ((int($_) - 2800) / 8)')
+	      # Print e.g. 30.01	▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
+	      perl -ne 'printf "%.2f\t%s\n", $_, "▉" x ((int($_ * 100) - 2800) / 8)')
 
 TIMES=$(cat $WEATHER_FILE |
 	  # Just times
