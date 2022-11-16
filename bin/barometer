@@ -11,28 +11,28 @@ HH_MM_REGEX="\d\d:\d\d"
 curl -s $PHILLY > $WEATHER_FILE
 
 TIMEZONE=$(cat $WEATHER_FILE |
-	     rg --regexp "e[ds]t" -o |
-	     head -1)
+						 rg --regexp "e[ds]t" -o |
+						 head -1)
 
 LOCATION=$(cat $WEATHER_FILE |
-	     rg $LOCATION_REGEX -r '$1' -o)
+						 rg $LOCATION_REGEX -r '$1' -o)
 
 PRESSURES=$(cat $WEATHER_FILE |
-	      # Just pressures
-	      rg $PRESSURES_REGEX -o |
-	      # Print e.g. 30.01	▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉
-	      perl -ne 'printf "%.2f\t%s\n", $_, "▉" x ((int($_ * 100) - 2800) / 8)')
+							# Just pressures
+							rg $PRESSURES_REGEX -o |
+							# Print e.g. 30.21 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+							perl -ne 'printf "%.2f\t%s\n", $_, "▉" x ((int($_ * 100) - 2800) / 8)')
 
 TIMES=$(cat $WEATHER_FILE |
-	  # Just times
-	  rg --regexp $HH_MM_REGEX -o)
+					# Just times
+					rg --regexp $HH_MM_REGEX -o)
 
 echo $LOCATION
 echo -e "Time\tPressure"
 echo -e "($TIMEZONE)\t(in Hg)"
 
 paste <(printf %s "$TIMES") <(printf %s "$PRESSURES") |
-  # Just the last $HOURS hours
-  head -n $HOURS |
-  # Reverse it: most recent is printed last
-  tac
+	# Just the last $HOURS hours
+	head -n $HOURS |
+	# Reverse it: most recent is printed last
+	tac
